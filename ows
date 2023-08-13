@@ -1,12 +1,28 @@
 #!/usr/bin/env bash
 # vim: set ts=2 sw=2 expandtab :
-wOut=docs
-wIn='*.lisp'
-wPrep=lisp2md
-wBack=EEE
-wBold=CC0000
+help() { cat<<EOF
+
+ows: our web site, built from markdown in multi-line comments
+(c)2023, Tim Menzies, <timm@ieee.org> BSD-2
+
+USAGE:
+  $USAGE
+
+OPTIONS:
+  -F            force recomple of all
+  -d  dir       output directory       = $OUT
+  -h            show help 
+  -t  template  template               = $THEME
+EOF
+exit
+}
+USAGE="sh ows [-Fdht] files"
+OUT=docs
+FORCE=
+THEME=default
+NEEDS=gawk
 # --------------------------------------------------------------
-sidebar() { cat<<-'EOF'
+default_sidebar() { cat<<-'EOF'
 	<center>
 	<p><a  href="index.html">home</a> :: 
 	<a href="">src</a> ::
@@ -20,7 +36,7 @@ sidebar() { cat<<-'EOF'
 	</center>
 EOF
 }
-style() { cat<<EOF
+default_style() { cat<<EOF
 	body  { 
 	  padding: -20px; margin: -20px;
 	  padding-right: 10px; margin-right: 10px;
@@ -29,11 +45,11 @@ style() { cat<<EOF
 	pre   { 
 		padding: 5px;
 		border-left: 1px dotted black;
-		background-image: linear-gradient(to right, #${wBack}, white);
+		background-image: linear-gradient(to right, #EEE, white);
 		margin-left: 30px;
 		padding: 5px;
 	}
-	a { color: #${wBold}; text-decoration: none; font-weight: bold; }
+	a { color: #CC0000; text-decoration: none; font-weight: bold; }
 	a:hover { text-decoration: underline; }
 	
 	h1,h2,h3,h4    { xmargin-top: 0px; padding-top: 0px; 
@@ -41,7 +57,7 @@ style() { cat<<EOF
 	} 
 	h1 { padding-top: 20px; }
 	
-	.admonition       { border: 1px solid #${wBack}; box-shadow: 2px 2px 3px black; }
+	.admonition       { border: 1px solid #EEE; box-shadow: 2px 2px 3px black; }
 	.admonition-title { font-weight: bold; 
 	}
 	.summary          { 
@@ -58,7 +74,7 @@ style() { cat<<EOF
 	}
 	
 	.left {
-		background-image: linear-gradient(#${wBack}, white);
+		background-image: linear-gradient(#EEE, white);
 	  width: 220px;
 	  height: 100%; /* To take the full height of the container */
 	  position: absolute;
@@ -73,7 +89,7 @@ style() { cat<<EOF
 	}
 EOF
 }
-header() { cat<<-'EOF'
+default_header() { cat<<-'EOF'
 <!DOCTYPE html>
 <html>
   <head>
@@ -97,22 +113,9 @@ cat<<-'EOF'
   </script>
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js"> </script>
 EOF
-echo "<style>"; style; echo "</style>\n</head>"
+echo "<style>"; ${THEME}_style; echo "</style>\n</head>"
 }
 ##############################################################
-wNeeds="gawk"
-FMT=" -x toc -x codehilite -x tables -x fenced_code -x footnotes -x attr_list -x admonition"
-
-install() {
-  if   [[ "$OSTYPE" == "darwin"* ]]   ; then brew install $1
-  elif [[ "$OSTYPE" == "linux-gnu"* ]]; then apt-get install $1
-  elif [[ "$OSTYPE" == "freebsd"* ]]  ; then pkg install $1
-  elif [[ "$OSTYPE" == "cygwin" ]]    ; then echo eek, how do i install $1
-  elif [[ "$OSTYPE" == "msys" ]]      ; then echo eek, how do i install $1
-  elif [[ "$OSTYPE" == "win32" ]]     ; then echo eek, how do i install $1
-  else                                       echo eek, how do i install $1
-  fi
-}
 
 lisp2md() { gawk '
   BEGIN           { Top=1; }
@@ -126,34 +129,58 @@ lisp2md() { gawk '
     while ((getline y < x) > 0) print y
       close(x) } ' 
 }
-
+install() {
+  if   [[ "$OSTYPE" == "darwin"* ]]   ; then brew install $1
+  elif [[ "$OSTYPE" == "linux-gnu"* ]]; then apt-get install $1
+  elif [[ "$OSTYPE" == "freebsd"* ]]  ; then pkg install $1
+  elif [[ "$OSTYPE" == "cygwin" ]]    ; then echo eek, how do i install $1
+  elif [[ "$OSTYPE" == "msys" ]]      ; then echo eek, how do i install $1
+  elif [[ "$OSTYPE" == "win32" ]]     ; then echo eek, how do i install $1
+  else                                       echo eek, how do i install $1
+  fi
+}
+FMT=" -x toc -x codehilite -x tables -x fenced_code -x footnotes -x attr_list -x admonition"
 one() {
-  cat $1 | $wPrep > tmp_md0
-  python3 -m markdown ${FMT} tmp_md0 > tmp_md
-  patch tmp_md  
-  #rm tmp_md0 tmp_md
+  if [[  "$(type -t $2)" == "fuction" ]]; then
+     cat $1 | $2 > tmp_md0
+     python3 -m markdown ${FMT} tmp_md0 > tmp_md
+     patch tmp_md  
+     rm tmp_md0 tmp_md
+  else
+     echo "$2 unknown"
+  fi
 }
 patch() {
   title=`gawk 'sub(/^# /,""){print $0; exit}' $1`
-  header "$title"
+  ${THEME}_header "$title"
   printf '<body>\n <div class="parent">\n <div class="left">\n'
-  sidebar
-  gawk '/<div class="toc"/,/<\/div>/ {print $0; next}'  $1
+  ${THEME}_sidebar
+  gawk   '/<div class="toc"/,/<\/div>/ {print $0; next}'  $1
   printf '</div>\n<div class="right">'
-  gawk '/<div class="toc"/,/<\/div>/ {next} 1'  $1
+  gawk   '/<div class="toc"/,/<\/div>/ {next} 1'  $1
   printf "</div>\n </div>\n</body>\n</html>"
 }
 #######################################################
-
-for c in ${wNeeds}; do 
+for c in ${NEEDS}; do 
    which $c >/dev/null || install $c ;done
-for c in ${wNeeds};do 
-    which $c >/dev/null || (echo "missing $c"; exit 1); done
+for c in ${NEEDS};do 
+   which $c >/dev/null || (echo "missing $c"; exit 1); done
 
-for f in `ls $wIn`; do
-  mkdir -p $wOut
-  g=$wOut/${f%.*}.html
-  if  [ "$f" -nt "$g" -o "$1" != "" ]; then
-     echo "now sh.ow.ing $g ..."; one $f > $g
-  fi
+while getopts "d:Fht:" opt; do
+   case $opt in
+      d) OUT=$OPTARG;;
+      F) FORCE=1;;
+      t) TEMPLATE=$OPTARG;;
+      h) help;;
+      *) echo "usage: $USAGE";;
+   esac
+done
+
+for f in $*; do
+   mkdir -p $OUT
+   x="${f##*.}"
+   if [ "$f" -nt "$g" -o -n "$FORCE" ]
+   then  echo "sh.ows.ing $g ..."
+      one $f $(x)2md > $OUT/${f%.*}.html
+   fi
 done

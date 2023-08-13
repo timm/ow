@@ -1,2 +1,2 @@
-# ow
-simple static web site generator (only needs to download one file)
+# ows: our web site
+Simple static web site generator (you only need to download one file)
