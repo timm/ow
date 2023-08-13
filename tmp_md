@@ -1,0 +1,13 @@
+<p>(let ((seed 1234567891))
+  (defun srand (&amp;optional (n 1234567891)) (setf seed n))</p>
+<p>(defun rand (&amp;optional (n 1))
+    (setf seed (mod (<em> 16807.0d0 seed) 2147483647.0d0))
+    (</em> n (- 1.0d0 (/ seed 2147483647.0d0))))</p>
+<p>(defun rint (&amp;optional (n 1) &amp;aux (base 10000000000.0))
+    (floor (* n (/ (rand base) base)))))</p>
+<p>(defun args () 
+  #+clisp ext:<em>args</em><br />
+  #+sbcl sb-ext:<em>posix-argv</em>)</p>
+<p>(defun stop (&amp;optional (status 0)) 
+  #+clisp (ext:exit status) 
+  #+sbcl  (sb-ext:exit :code status))</p>

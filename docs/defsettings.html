@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+  <head>
+<title></title>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.7/css/all.css">
+  <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro|Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { fonts: ["TeX"] }
+    });
+  </script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js"> </script>
+<style>
+	body  { 
+	  padding: -20px; margin: -20px;
+	  padding-right: 10px; margin-right: 10px;
+		font-family: Source Sans Pro, Roboto, Open Sans, Liberation Sans, DejaVu Sans, Verdana, Helvetica, Arial, sans-serif;
+	}
+	pre   { 
+		padding: 5px;
+		border-left: 1px dotted black;
+		background-image: linear-gradient(to right, #EEE, white);
+		margin-left: 30px;
+		padding: 5px;
+	}
+	a { color: #CC0000; text-decoration: none; font-weight: bold; }
+	a:hover { text-decoration: underline; }
+	
+	h1,h2,h3,h4    { xmargin-top: 0px; padding-top: 0px; 
+		color: #{wBold}; 
+	} 
+	h1 { padding-top: 20px; }
+	
+	.admonition       { border: 1px solid #EEE; box-shadow: 2px 2px 3px black; }
+	.admonition-title { font-weight: bold; 
+	}
+	.summary          { 
+		padding-left: 20px; padding-right: 10px;
+		margin-left:  20px; margin-right:  20px; 
+		background-color: #d9faff; 
+	}
+	.toc { font-size: small;}
+	
+	.left  ul { padding-left:30px; }
+	
+	.parent { position: relative; 
+	  xpadding-top: 10px; 
+	}
+	
+	.left {
+		background-image: linear-gradient(#EEE, white);
+	  width: 220px;
+	  height: 100%; /* To take the full height of the container */
+	  position: absolute;
+	  top: 0;
+	  left: 0;
+	  padding-left:10px;
+	}
+	
+	.right {
+	  height: 100%; /* To take the full height of the container */
+	  margin-left: 260px; /* To avoid overlap with the fixed-width div */
+	}
+</style>
+</head>
+<body>
+ <div class="parent">
+ <div class="left">
+<center>
+<p><a  href="index.html">home</a> :: 
+<a href="">src</a> ::
+<a href="">issues</a> </p>
+<hr>
+
+<h2>SE+AI: just the important bits</h2>
+<p><a href="license">&copy;2023</a> by <a href="">Tim Menzies</a></p>
+<img src="dots4.png" width=190  
+  style="margin-bottom: 0px; padding-bottom: 0px; border-bottom: 1px solid black;">
+</center>
+</div>
+<div class="right"><p>(unless (fboundp 'aif) (load "defmacro"))
+(unless (fboundp 'srand) (load "lib"))</p>
+<p>(defvar <em>settings</em>
+  '((about "cutr"
+           ("cutr: to understand 'it',  cut 'it' up, then seek patterns in"
+            "the pieces. E.g. here we use cuts for multi- objective,"
+            "semi- supervised, rule-based explanation."
+            "(c) Tim Menzies <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#116;&#105;&#109;&#109;&#64;&#105;&#101;&#101;&#101;&#46;&#111;&#114;&#103;">&#116;&#105;&#109;&#109;&#64;&#105;&#101;&#101;&#101;&#46;&#111;&#114;&#103;</a>, BSD-2 license"
+            ""))
+    (bins      "initial number of bins"     16)
+    (bootstrap "bootstraps"                 256)
+    (cliffs    "nonparametric small delta"  .147)
+    (cohen     "parametric small delta"     .35)
+    (eg        "start up action"            help)
+    (file      "read data file"             "../data/auto93.csv")
+    (help      "show help"                  nil)
+    (seed      "random number seed"         1234567891)
+    (min       "min size"                   .5)
+    (rest      "exapansion best to rest"    3)
+    (top       "top items to explore"       10)
+    (want      "optimization goal"          plan)))
+;----------------------------------------------------
+(defmacro ? (x) `(caddr (assoc ',x <em>settings</em>)))</p>
+<p>(defun settings-update (settings)
+  (labels ((update (b4 it) 
+                   (if it 
+                     (typecase b4
+                       (number (read-from-string (second it)))
+                       (symbol (read-from-string (second it)))
+                       (string (second it))
+                       (t      (not b4)))
+                     b4))) ; no update
+    (loop for (flag help b4) in settings collect 
+      (list flag help 
+            (update b4 (member (format nil "--~(~a~)" flag) (args)))))))</p>
+<p>(defun settings-show (settings)
+  (format t "~%~{~a~%~}OPTIONS:~%" (caddr (assoc 'about settings)))
+  (dolist (x (cdr settings)) 
+    (format t "  --~(~10a~) ~a~%"  (first x) (second x))))
+;------------------------------------------------------------------------------------
+(setf <em>settings</em> (settings-update <em>settings</em>))
+(if (? help) (settings-show <em>settings</em>))</p>
+</div>
+ </div>
+</body>
+</html>

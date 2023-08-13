@@ -1,0 +1,159 @@
+#!/usr/bin/env bash
+# vim: set ts=2 sw=2 expandtab :
+wOut=docs
+wIn='*.lisp'
+wPrep=lisp2md
+wBack=EEE
+wBold=CC0000
+# --------------------------------------------------------------
+sidebar() { cat<<-'EOF'
+	<center>
+	<p><a  href="index.html">home</a> :: 
+	<a href="">src</a> ::
+	<a href="">issues</a> </p>
+	<hr>
+	
+	<h2>SE+AI: just the important bits</h2>
+	<p><a href="license">&copy;2023</a> by <a href="">Tim Menzies</a></p>
+	<img src="dots4.png" width=190  
+	  style="margin-bottom: 0px; padding-bottom: 0px; border-bottom: 1px solid black;">
+	</center>
+EOF
+}
+style() { cat<<EOF
+	body  { 
+	  padding: -20px; margin: -20px;
+	  padding-right: 10px; margin-right: 10px;
+		font-family: Source Sans Pro, Roboto, Open Sans, Liberation Sans, DejaVu Sans, Verdana, Helvetica, Arial, sans-serif;
+	}
+	pre   { 
+		padding: 5px;
+		border-left: 1px dotted black;
+		background-image: linear-gradient(to right, #${wBack}, white);
+		margin-left: 30px;
+		padding: 5px;
+	}
+	a { color: #${wBold}; text-decoration: none; font-weight: bold; }
+	a:hover { text-decoration: underline; }
+	
+	h1,h2,h3,h4    { xmargin-top: 0px; padding-top: 0px; 
+		color: #{wBold}; 
+	} 
+	h1 { padding-top: 20px; }
+	
+	.admonition       { border: 1px solid #${wBack}; box-shadow: 2px 2px 3px black; }
+	.admonition-title { font-weight: bold; 
+	}
+	.summary          { 
+		padding-left: 20px; padding-right: 10px;
+		margin-left:  20px; margin-right:  20px; 
+		background-color: #d9faff; 
+	}
+	.toc { font-size: small;}
+	
+	.left  ul { padding-left:30px; }
+	
+	.parent { position: relative; 
+	  xpadding-top: 10px; 
+	}
+	
+	.left {
+		background-image: linear-gradient(#${wBack}, white);
+	  width: 220px;
+	  height: 100%; /* To take the full height of the container */
+	  position: absolute;
+	  top: 0;
+	  left: 0;
+	  padding-left:10px;
+	}
+	
+	.right {
+	  height: 100%; /* To take the full height of the container */
+	  margin-left: 260px; /* To avoid overlap with the fixed-width div */
+	}
+EOF
+}
+header() { cat<<-'EOF'
+<!DOCTYPE html>
+<html>
+  <head>
+EOF
+echo "<title>$1</title>"
+cat<<-'EOF'
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.7/css/all.css">
+  <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro|Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { fonts: ["TeX"] }
+    });
+  </script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js"> </script>
+EOF
+echo "<style>"; style; echo "</style>\n</head>"
+}
+##############################################################
+wNeeds="gawk"
+FMT=" -x toc -x codehilite -x tables -x fenced_code -x footnotes -x attr_list -x admonition"
+
+install() {
+  if   [[ "$OSTYPE" == "darwin"* ]]   ; then brew install $1
+  elif [[ "$OSTYPE" == "linux-gnu"* ]]; then apt-get install $1
+  elif [[ "$OSTYPE" == "freebsd"* ]]  ; then pkg install $1
+  elif [[ "$OSTYPE" == "cygwin" ]]    ; then echo eek, how do i install $1
+  elif [[ "$OSTYPE" == "msys" ]]      ; then echo eek, how do i install $1
+  elif [[ "$OSTYPE" == "win32" ]]     ; then echo eek, how do i install $1
+  else                                       echo eek, how do i install $1
+  fi
+}
+
+lisp2md() { gawk '
+  BEGIN           { Top=1; }
+  $1 ~ /;include/ { print "\n\n```text"; include($2); print "```\n\n"; next; }
+  sub(/^#\|/,"")  { In=0;  print(Top ? "" : "```\n\n\n"); Top=0; next }
+  sub(/^\|#/,"")  { In=1;  print "\n\n\n```lisp"; next }
+  sub(/\|#/,"")   { In=0 }
+  1
+
+  function include(x) {
+    while ((getline y < x) > 0) print y
+      close(x) } ' 
+}
+
+one() {
+  cat $1 | $wPrep > tmp_md0
+  python3 -m markdown ${FMT} tmp_md0 > tmp_md
+  patch tmp_md  
+  #rm tmp_md0 tmp_md
+}
+patch() {
+  title=`gawk 'sub(/^# /,""){print $0; exit}' $1`
+  header "$title"
+  printf '<body>\n <div class="parent">\n <div class="left">\n'
+  sidebar
+  gawk '/<div class="toc"/,/<\/div>/ {print $0; next}'  $1
+  printf '</div>\n<div class="right">'
+  gawk '/<div class="toc"/,/<\/div>/ {next} 1'  $1
+  printf "</div>\n </div>\n</body>\n</html>"
+}
+#######################################################
+
+for c in ${wNeeds}; do 
+   which $c >/dev/null || install $c ;done
+for c in ${wNeeds};do 
+    which $c >/dev/null || (echo "missing $c"; exit 1); done
+
+for f in `ls $wIn`; do
+  mkdir -p $wOut
+  g=$wOut/${f%.*}.html
+  if  [ "$f" -nt "$g" -o "$1" != "" ]; then
+     echo "now sh.ow.ing $g ..."; one $f > $g
+  fi
+done
