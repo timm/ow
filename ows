@@ -31,7 +31,7 @@ default_sidebar() { cat<<-'EOF'
 	
 	<h2>SE+AI: just the important bits</h2>
 	<p><a href="license">&copy;2023</a> by <a href="">Tim Menzies</a></p>
-	<img src="dots4.png" width=190  
+	<img src="img/dots4.png" width=190  
 	  style="margin-bottom: 0px; padding-bottom: 0px; border-bottom: 1px solid black;">
 	</center>
 EOF
