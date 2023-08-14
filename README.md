@@ -11,8 +11,13 @@ render those use Python's Markdown with the following exxtesions:
 
         -x toc -x codehilite -x tables -x fenced_code -x footnotes -x attr_list -x admonition
 
+## Examples
 
-That's all folks.
+- Input: see `eg/*`;
+- Build: see the `all` command in `eg/Makefile`;
+- Out: see `docs/*`
+
+## CLI
 
 ```
 ows: our web site, built from markdown in multi-line comments
