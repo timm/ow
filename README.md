@@ -2,12 +2,15 @@
 
 # ows: our web site
 
-Simple static web site generator (you only need to download one file).
+Simple static web site generator (you only need to download one
+file).
 
-Written out of frustration with Jekyll, Hykell, 11tweenty, Hugo, etc etc.  
+Written out of frustration with the unnecessary complexity of Jekyll,
+Hykell, Eleventy, Hugo, etc etc.
 
-Given source code in lisp or Python or LUA format, generate one web page per file. If the files contain multi-line comments,
-render those use Python's Markdown with the following exxtesions:
+Given source code in lisp or Python or LUA format, generate one web
+page per file. If the files contain multi-line comments, render
+those use Python's Markdown with the following exxtesions:
 
         -x toc -x codehilite -x tables -x fenced_code -x footnotes -x attr_list -x admonition
 
