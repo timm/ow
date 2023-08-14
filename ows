@@ -141,14 +141,10 @@ install() {
 }
 FMT=" -x toc -x codehilite -x tables -x fenced_code -x footnotes -x attr_list -x admonition"
 one() {
-  if [[  "$(type -t $2)" == "fuction" ]]; then
-     cat $1 | $2 > tmp_md0
-     python3 -m markdown ${FMT} tmp_md0 > tmp_md
-     patch tmp_md  
-     rm tmp_md0 tmp_md
-  else
-     echo "$2 unknown"
-  fi
+  cat $1 | $2 > tmp_md0
+  python3 -m markdown ${FMT} tmp_md0 > tmp_md
+  patch tmp_md   
+  rm tmp_md0 tmp_md
 }
 patch() {
   title=`gawk 'sub(/^# /,""){print $0; exit}' $1`
@@ -166,21 +162,24 @@ for c in ${NEEDS}; do
 for c in ${NEEDS};do 
    which $c >/dev/null || (echo "missing $c"; exit 1); done
 
-while getopts "d:Fht:" opt; do
+while getopts "Fht:d:" opt; do
    case $opt in
       d) OUT=$OPTARG;;
-      F) FORCE=1;;
+      F) FORCE="force";;
       t) TEMPLATE=$OPTARG;;
       h) help;;
       *) echo "usage: $USAGE";;
    esac
 done
 
+shift $((OPTIND - 1))
+
 for f in $*; do
    mkdir -p $OUT
-   x="${f##*.}"
-   if [ "$f" -nt "$g" -o -n "$FORCE" ]
+   g=$OUT/${f%.*}.html
+   x=${f##*.}
+   if [[ "$f" -nt "$g" || -n "$FORCE" ]]
    then  echo "sh.ows.ing $g ..."
-      one $f $(x)2md > $OUT/${f%.*}.html
+      one $f ${x}2md > $g
    fi
 done
