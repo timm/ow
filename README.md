@@ -1,4 +1,4 @@
-<img align=right width=300 src="docs/img/banner.png">
+<img align=right width=250 src="docs/img/banner.png">
 
 # ows: our web site
 
